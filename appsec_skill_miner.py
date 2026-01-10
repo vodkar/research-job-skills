@@ -8,6 +8,7 @@ AppSec skill miner (RU market): HeadHunter + SuperJob (+ optional Trudvsem open 
 - Outputs:
     - jobs.jsonl (normalized vacancies)
     - skills_top.csv (top skills by frequency)
+    - skills_by_grade.csv (skill counts split by inferred grade: junior/middle/senior/unknown)
 
 Notes:
 - Respect each provider's ToS and rate limits.
@@ -34,10 +35,10 @@ import requests
 from requests import Response
 from requests.exceptions import HTTPError
 
-
 # ---------------------------
 # Helpers
 # ---------------------------
+
 
 class _HTMLStripper(HTMLParser):
     def __init__(self) -> None:
@@ -81,7 +82,7 @@ def parse_iso_dt(s: str) -> Optional[datetime]:
 
 def backoff_sleep(attempt: int) -> None:
     # simple exponential backoff with cap
-    time.sleep(min(2 ** attempt, 20))
+    time.sleep(min(2**attempt, 20))
 
 
 def http_get_json(
@@ -93,16 +94,33 @@ def http_get_json(
     timeout: int = 25,
     max_retries: int = 6,
 ) -> Dict[str, Any]:
+    last_response: Response | None = None
+    last_exc: Exception | None = None
+
     for attempt in range(max_retries):
-        r = session.get(url, params=params, headers=headers, timeout=timeout)
+        try:
+            r = session.get(url, params=params, headers=headers, timeout=timeout)
+            last_response = r
+        except Exception as e:
+            last_exc = e
+            backoff_sleep(attempt)
+            continue
+
         if r.status_code == 429 or 500 <= r.status_code < 600:
             backoff_sleep(attempt)
             continue
+
         try:
             r.raise_for_status()
         except HTTPError as e:
             raise RuntimeError(_format_http_error(url=url, response=r)) from e
+
         return r.json()
+
+    if last_response is not None:
+        raise RuntimeError(_format_http_error(url=url, response=last_response))
+    if last_exc is not None:
+        raise RuntimeError(f"Failed after retries: GET {url}. Last error: {last_exc}")
     raise RuntimeError(f"Failed after retries: GET {url}")
 
 
@@ -127,6 +145,105 @@ def _format_http_error(*, url: str, response: Response) -> str:
 
 
 # ---------------------------
+# Grade / seniority inference
+# ---------------------------
+
+
+def _normalize_text(s: str) -> str:
+    return re.sub(r"\s+", " ", (s or "").strip())
+
+
+def infer_years_from_text(text: str) -> Tuple[Optional[float], Optional[float]]:
+    """Best-effort extraction of required experience from free text.
+
+    Returns (min_years, max_years). Either can be None.
+    """
+    t = _normalize_text(text).lower()
+
+    # Common RU patterns: "опыт от 3 лет", "от 3-х лет", "не менее 5 лет"
+    m = re.search(
+        r"опыт\s*(?:работы\s*)?(?:от|не\s*менее)\s*(\d+(?:[\.,]\d+)?)\s*(?:года|лет|г\.?|years?)",
+        t,
+    )
+    if m:
+        return float(m.group(1).replace(",", ".")), None
+
+    m = re.search(
+        r"опыт\s*(?:работы\s*)?(?:от)\s*(\d+(?:[\.,]\d+)?)\s*(?:года|лет|г\.?|years?)\s*(?:до)\s*(\d+(?:[\.,]\d+)?)\s*(?:года|лет|г\.?|years?)",
+        t,
+    )
+    if m:
+        return (
+            float(m.group(1).replace(",", ".")),
+            float(m.group(2).replace(",", ".")),
+        )
+
+    # English-ish: "3+ years", "at least 5 years"
+    m = re.search(r"(?:at\s+least|minimum\s+of)\s*(\d+(?:[\.,]\d+)?)\s*\+?\s*years?", t)
+    if m:
+        return float(m.group(1).replace(",", ".")), None
+    m = re.search(r"\b(\d+(?:[\.,]\d+)?)\s*\+\s*years?", t)
+    if m:
+        return float(m.group(1).replace(",", ".")), None
+    m = re.search(r"\b(\d+(?:[\.,]\d+)?)\s*[-–]\s*(\d+(?:[\.,]\d+)?)\s*years?", t)
+    if m:
+        return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
+
+    return None, None
+
+
+def infer_grade(
+    *,
+    title: str,
+    text: str,
+    exp_min_years: Optional[float],
+    exp_max_years: Optional[float],
+) -> str:
+    """Infer engineer grade: junior/middle/senior (or unknown).
+
+    Priority:
+      1) Explicit level keywords in title/text.
+      2) Experience years mapping: 0-3 junior, 3-6 middle, >6 senior.
+    """
+    hay = f"{title}\n{text}".lower()
+
+    # Explicit levels (RU + EN)
+    if re.search(r"\b(intern|trainee|стаж[её]р|стажировка)\b", hay):
+        return "junior"
+    if re.search(r"\b(junior|jr\.?|джун(?:иор)?|jun)\b", hay):
+        return "junior"
+    if re.search(r"\b(middle|mid\.?|мидл|midl)\b", hay):
+        return "middle"
+    if re.search(r"\b(senior|sr\.?|сеньор|sen)\b", hay):
+        return "senior"
+    if re.search(r"\b(lead|principal|тимлид|team\s*lead|tech\s*lead)\b", hay):
+        return "senior"
+
+    # Fallback: use experience
+    mn = exp_min_years
+    mx = exp_max_years
+    if mn is None and mx is None:
+        mn2, mx2 = infer_years_from_text(hay)
+        mn = mn2 if mn2 is not None else mn
+        mx = mx2 if mx2 is not None else mx
+
+    # Rule requested by you
+    if mn is not None:
+        if mn < 3:
+            return "junior"
+        if mn <= 6:
+            return "middle"
+        return "senior"
+    if mx is not None:
+        if mx <= 3:
+            return "junior"
+        if mx <= 6:
+            return "middle"
+        return "senior"
+    return "unknown"
+
+
+# ---------------------------
 # Skill extraction
 # ---------------------------
 
@@ -134,20 +251,50 @@ def _format_http_error(*, url: str, response: Response) -> str:
 # Extend this list as needed; for best quality, iterate on real collected data.
 SKILL_PATTERNS: Dict[str, List[str]] = {
     "OWASP": [r"\bowasp\b", r"owasp\s+top\s*10"],
-    "OWASP ASVS": [r"\bowasp\s+asvs\b", r"\basvs\b", r"application\s+security\s+verification\s+standard"],
-    "OWASP WSTG": [r"\bowasp\s+wstg\b", r"\bwstg\b", r"web\s+security\s+testing\s+guide"],
-    "OWASP MASVS": [r"\bowasp\s+masvs\b", r"\bmasvs\b", r"mobile\s+application\s+security\s+verification\s+standard"],
+    "OWASP ASVS": [
+        r"\bowasp\s+asvs\b",
+        r"\basvs\b",
+        r"application\s+security\s+verification\s+standard",
+    ],
+    "OWASP WSTG": [
+        r"\bowasp\s+wstg\b",
+        r"\bwstg\b",
+        r"web\s+security\s+testing\s+guide",
+    ],
+    "OWASP MASVS": [
+        r"\bowasp\s+masvs\b",
+        r"\bmasvs\b",
+        r"mobile\s+application\s+security\s+verification\s+standard",
+    ],
     "CWE": [r"\bcwe\b", r"common\s+weakness\s+enumeration", r"\bcwe-\d+\b"],
     "CVE": [r"\bcve\b", r"\bcve-\d{4}-\d{4,7}\b"],
     "CVSS": [r"\bcvss\b", r"cvss\s*v?\d(\.\d)?", r"cvss\s*base\s*score"],
     "Threat modeling": [r"threat\s*model", r"модел(ирование|ь)\s*угроз"],
-    "Secure SDLC": [r"secure\s*sdlc", r"ssd?lc", r"безопасн(ая|ое)\s*(разработк|жизненн)"],
+    "Secure SDLC": [
+        r"secure\s*sdlc",
+        r"ssd?lc",
+        r"безопасн(ая|ое)\s*(разработк|жизненн)",
+    ],
     "DevSecOps": [r"\bdevsecops\b", r"dev\s*sec\s*ops"],
     "SAST": [r"\bsast\b", r"static\s+app", r"статическ(ий|ое)\s+анализ"],
     "DAST": [r"\bdast\b", r"dynamic\s+app", r"динамическ(ий|ое)\s+анализ"],
-    "SCA": [r"\bsca\b", r"software\s+composition", r"dependency\s+scan", r"анализ\s+зависимост"],
-    "Pentest": [r"\bpen\s*test\b", r"penetration\s+test", r"пентест", r"тестирован(ие|ия)\s+на\s+проникнов"],
-    "Web security": [r"web\s+security", r"безопасност[ьи]\s+веб", r"\bweb\b.*\bsecurity\b"],
+    "SCA": [
+        r"\bsca\b",
+        r"software\s+composition",
+        r"dependency\s+scan",
+        r"анализ\s+зависимост",
+    ],
+    "Pentest": [
+        r"\bpen\s*test\b",
+        r"penetration\s+test",
+        r"пентест",
+        r"тестирован(ие|ия)\s+на\s+проникнов",
+    ],
+    "Web security": [
+        r"web\s+security",
+        r"безопасност[ьи]\s+веб",
+        r"\bweb\b.*\bsecurity\b",
+    ],
     # Avoid counting plain URLs like "https://example.com" as a skill mention.
     "HTTP(S)": [
         r"\bhttps?\b(?!\s*://)",
@@ -156,7 +303,11 @@ SKILL_PATTERNS: Dict[str, List[str]] = {
     ],
     "Cookies": [r"\bcookies?\b", r"\bcookie\b", r"кук(и|и?с)"],
     "Sessions": [r"\bsessions?\b", r"\bsession\b", r"сесси(я|и|й)"],
-    "CORS": [r"\bcors\b", r"cross[-\s]?origin\s+resource\s+sharing", r"межсайтов(ый|ое)\s+доступ"],
+    "CORS": [
+        r"\bcors\b",
+        r"cross[-\s]?origin\s+resource\s+sharing",
+        r"межсайтов(ый|ое)\s+доступ",
+    ],
     "HTML": [r"\bhtml\b", r"hypertext\s+markup\s+language"],
     "JavaScript": [r"\bjavascript\b", r"\bjs\b", r"ecmascript"],
     "SQL": [r"\bsql\b", r"sql\s+injection", r"инъекц(ия|ии)\s+sql"],
@@ -183,11 +334,22 @@ SKILL_PATTERNS: Dict[str, List[str]] = {
     "Git": [r"\bgit\b", r"\bgitflow\b", r"pull\s+request", r"merge\s+request"],
     "Agile": [r"\bagile\b", r"\bscrum\b", r"\bkanban\b"],
     "Kubernetes": [r"\bkubernetes\b", r"\bk8s\b"],
-    "Cloud security": [r"\baws\b", r"\bazure\b", r"\bgcp\b", r"облачн(ая|ые)\s+безопасн"],
+    "Cloud security": [
+        r"\baws\b",
+        r"\bazure\b",
+        r"\bgcp\b",
+        r"облачн(ая|ые)\s+безопасн",
+    ],
     "WAF": [r"\bwaf\b", r"web\s+application\s+firewall"],
     "Logging/SIEM": [r"\bsiem\b", r"splunk", r"elk", r"opensearch"],
     "Bug bounty": [r"\bbug\s*bounty\b", r"\bbugbounty\b"],
-    "Mobile security": [r"\bmobile\s+security\b", r"\bmobsf\b", r"\bfrida\b", r"\bowasp\s+masvs\b", r"\bmasvs\b"],
+    "Mobile security": [
+        r"\bmobile\s+security\b",
+        r"\bmobsf\b",
+        r"\bfrida\b",
+        r"\bowasp\s+masvs\b",
+        r"\bmasvs\b",
+    ],
     "Python": [r"\bpython\b", r"python\s*3"],
     "Java": [r"\bjava\b", r"\bjvm\b"],
     "C#": [r"\bc\s*#\b", r"\bc#\b", r"\bcsharp\b", r"c[-\s]?sharp"],
@@ -198,7 +360,12 @@ SKILL_PATTERNS: Dict[str, List[str]] = {
     ],
     "bcrypt": [r"\bbcrypt\b"],
     "Argon2": [r"\bargon2\b"],
-    "Password storage": [r"password\s+storage", r"password\s+hash", r"хеш(ирование|ирование)\s+парол", r"хранени(е|я)\s+парол"],
+    "Password storage": [
+        r"password\s+storage",
+        r"password\s+hash",
+        r"хеш(ирование|ирование)\s+парол",
+        r"хранени(е|я)\s+парол",
+    ],
 }
 
 _COMPILED_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
@@ -221,6 +388,7 @@ def extract_skills(*, key_skills: Iterable[str], text: str) -> Set[str]:
 # Normalized vacancy model
 # ---------------------------
 
+
 @dataclass
 class Vacancy:
     source: str
@@ -232,6 +400,9 @@ class Vacancy:
     url: str
     key_skills: List[str]
     text: str
+    exp_min_years: Optional[float] = None
+    exp_max_years: Optional[float] = None
+    grade: str = "unknown"
 
     def to_json(self) -> Dict[str, Any]:
         return {
@@ -244,12 +415,16 @@ class Vacancy:
             "url": self.url,
             "key_skills": self.key_skills,
             "text": self.text,
+            "exp_min_years": self.exp_min_years,
+            "exp_max_years": self.exp_max_years,
+            "grade": self.grade,
         }
 
 
 # ---------------------------
 # Sources
 # ---------------------------
+
 
 class HeadHunterSource:
     """
@@ -271,7 +446,9 @@ class HeadHunterSource:
             return {}
         return {"User-Agent": self.ua}
 
-    def search_ids(self, query: str, area: str, page: int, per_page: int) -> Tuple[List[str], bool]:
+    def search_ids(
+        self, query: str, area: str, page: int, per_page: int
+    ) -> Tuple[List[str], bool]:
         data = http_get_json(
             self.s,
             f"{self.BASE}/vacancies",
@@ -290,20 +467,46 @@ class HeadHunterSource:
             f"{self.BASE}/vacancies/{vacancy_id}",
             headers=self._headers(),
         )
-        key_skills = [ks.get("name", "") for ks in (v.get("key_skills") or []) if isinstance(ks, dict)]
+        key_skills = [
+            ks.get("name", "")
+            for ks in (v.get("key_skills") or [])
+            if isinstance(ks, dict)
+        ]
         description = strip_html(v.get("description") or "")
         employer = (v.get("employer") or {}).get("name") or ""
         area = (v.get("area") or {}).get("name") or ""
+
+        exp = v.get("experience") or {}
+        exp_id = exp.get("id") if isinstance(exp, dict) else None
+        exp_min: Optional[float] = None
+        exp_max: Optional[float] = None
+        if exp_id == "noExperience":
+            exp_min, exp_max = 0.0, 0.0
+        elif exp_id == "between1And3":
+            exp_min, exp_max = 1.0, 3.0
+        elif exp_id == "between3And6":
+            exp_min, exp_max = 3.0, 6.0
+        elif exp_id == "moreThan6":
+            # HH label is "Более 6 лет"; for our thresholds treat as strictly > 6.
+            exp_min, exp_max = 7.0, None
+
+        title = str(v.get("name") or "")
+        grade = infer_grade(
+            title=title, text=description, exp_min_years=exp_min, exp_max_years=exp_max
+        )
         return Vacancy(
             source="hh",
             vacancy_id=str(v.get("id") or vacancy_id),
-            title=str(v.get("name") or ""),
+            title=title,
             company=str(employer),
             city=str(area),
             published_at=str(v.get("published_at") or ""),
             url=str(v.get("alternate_url") or ""),
             key_skills=[s for s in key_skills if s],
             text=description,
+            exp_min_years=exp_min,
+            exp_max_years=exp_max,
+            grade=grade,
         )
 
 
@@ -320,7 +523,9 @@ class SuperJobSource:
         self.s = session
         self.api_key = api_key
 
-    def search_ids(self, query: str, page: int, per_page: int) -> Tuple[List[str], bool]:
+    def search_ids(
+        self, query: str, page: int, per_page: int
+    ) -> Tuple[List[str], bool]:
         data = http_get_json(
             self.s,
             f"{self.BASE}/vacancies/",
@@ -347,8 +552,13 @@ class SuperJobSource:
         published_at = ""
         if isinstance(dp, (int, float)):
             published_at = datetime.fromtimestamp(dp, tz=timezone.utc).isoformat()
-        text = strip_html(v.get("candidat") or "") + "\n" + strip_html(v.get("work") or "")
+        text = (
+            strip_html(v.get("candidat") or "") + "\n" + strip_html(v.get("work") or "")
+        )
         url = str(v.get("link") or "")
+        grade = infer_grade(
+            title=title, text=text, exp_min_years=None, exp_max_years=None
+        )
         return Vacancy(
             source="superjob",
             vacancy_id=str(v.get("id") or vacancy_id),
@@ -359,6 +569,7 @@ class SuperJobSource:
             url=url,
             key_skills=[],
             text=text.strip(),
+            grade=grade,
         )
 
 
@@ -373,53 +584,143 @@ class TrudVsemSource:
     Note: API shape can differ; treat this connector as "best effort".
     """
 
-    BASE = "http://opendata.trudvsem.ru/api/v1"
+    BASE = "https://opendata.trudvsem.ru/api/v1"
 
     def __init__(self, session: requests.Session, region_codes: List[str]) -> None:
         self.s = session
         self.region_codes = region_codes
 
-    def search_ids(self, query: str, region: str, page: int, per_page: int) -> Tuple[List[str], bool]:
-        # Many examples do not support paging consistently; we implement naive page slicing if list is big.
-        data = http_get_json(
-            self.s,
-            f"{self.BASE}/vacancies/region/{region}",
-            params={"text": query},
+    @staticmethod
+    def _first_str(d: Dict[str, Any], keys: List[str]) -> str:
+        for k in keys:
+            v = d.get(k)
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+        return ""
+
+    @staticmethod
+    def _name_from_obj(obj: Any) -> str:
+        if isinstance(obj, dict):
+            for k in ("name", "title"):
+                v = obj.get(k)
+                if isinstance(v, str) and v.strip():
+                    return v.strip()
+        return ""
+
+    @classmethod
+    def _to_vacancy(cls, vac: Dict[str, Any]) -> Vacancy:
+        vacancy_id = cls._first_str(vac, ["id", "vacancyId", "vacancy_id"])
+        title = cls._first_str(
+            vac, ["job-name", "jobName", "profession", "position", "name"]
         )
-        # Expected: {"status":..., "results":{"vacancies":[{"vacancy":{...}}]}}
-        vacs = (((data.get("results") or {}).get("vacancies")) or [])
-        ids: List[str] = []
-        for item in vacs:
-            vac = item.get("vacancy") if isinstance(item, dict) else None
-            if isinstance(vac, dict):
-                vid = vac.get("id") or vac.get("vacancyId") or vac.get("vacancy_id")
-                if vid is not None:
-                    ids.append(str(vid))
 
-        start = page * per_page
-        end = start + per_page
-        sliced = ids[start:end]
-        has_more = end < len(ids)
-        return sliced, has_more
+        company = ""
+        for ck in ("company", "employer", "client"):
+            company = cls._name_from_obj(vac.get(ck))
+            if company:
+                break
 
-    def fetch(self, vacancy_id: str) -> Vacancy:
-        # Some deployments expose /vacancies/{id} but not always; so we leave details minimal.
+        city = ""
+        for lk in ("region", "town", "area", "location"):
+            loc = vac.get(lk)
+            if isinstance(loc, str) and loc.strip():
+                city = loc.strip()
+                break
+            city = cls._name_from_obj(loc)
+            if city:
+                break
+
+        published_at = cls._first_str(
+            vac,
+            [
+                "creation-date",
+                "creationDate",
+                "published_at",
+                "date_published",
+                "datePublished",
+            ],
+        )
+        url = cls._first_str(vac, ["link", "url", "vacancy_url"])
+
+        text_parts: List[str] = []
+        for tk in (
+            "duty",
+            "requirement",
+            "conditions",
+            "condition",
+            "responsibility",
+            "tasks",
+            "description",
+            "work",
+            "candidat",
+        ):
+            t = vac.get(tk)
+            if isinstance(t, str) and t.strip():
+                text_parts.append(t.strip())
+
+        text = "\n".join(text_parts).strip()
+        grade = infer_grade(
+            title=title, text=text, exp_min_years=None, exp_max_years=None
+        )
         return Vacancy(
             source="trudvsem",
             vacancy_id=vacancy_id,
-            title="",
-            company="",
-            city="",
-            published_at="",
-            url="",
+            title=title,
+            company=company,
+            city=city,
+            published_at=published_at,
+            url=url,
             key_skills=[],
-            text="",
+            text=text,
+            grade=grade,
         )
+
+    def search_vacancies(
+        self,
+        query: str,
+        *,
+        region: Optional[str],
+        page: int,
+        per_page: int,
+    ) -> Tuple[List[Vacancy], bool]:
+        # Official docs: paging via offset/limit and optional text search.
+        # Region is optional. If provided, use /vacancies/region/%region_code%.
+        offset = page * per_page
+        params: Dict[str, Any] = {"text": query, "offset": offset, "limit": per_page}
+        url = (
+            f"{self.BASE}/vacancies/region/{region}"
+            if region
+            else f"{self.BASE}/vacancies"
+        )
+
+        data = http_get_json(self.s, url, params=params)
+        vacs = ((data.get("results") or {}).get("vacancies")) or []
+
+        out: List[Vacancy] = []
+        for item in vacs:
+            vac = item.get("vacancy") if isinstance(item, dict) else None
+            if isinstance(vac, dict):
+                out.append(self._to_vacancy(vac))
+
+        total_raw = (data.get("meta") or {}).get("total")
+        total: Optional[int] = None
+        if isinstance(total_raw, str) and total_raw.isdigit():
+            total = int(total_raw)
+        elif isinstance(total_raw, int):
+            total = total_raw
+
+        if total is not None:
+            has_more = offset + len(vacs) < total
+        else:
+            has_more = len(vacs) >= per_page
+
+        return out, has_more
 
 
 # ---------------------------
 # Main pipeline
 # ---------------------------
+
 
 def within_days(published_at: str, days: int) -> bool:
     if not days or days <= 0:
@@ -441,12 +742,27 @@ def write_jsonl(path: str, rows: Iterable[Dict[str, Any]]) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Mine AppSec skills from RU job boards via official APIs.")
+    ap = argparse.ArgumentParser(
+        description="Mine AppSec skills from RU job boards via official APIs."
+    )
     ap.add_argument("--out-dir", default="out", help="Output directory")
-    ap.add_argument("--days", type=int, default=180, help="Keep vacancies published within N days (0 disables)")
-    ap.add_argument("--max-pages", type=int, default=20, help="Max pages per query per source")
-    ap.add_argument("--per-page", type=int, default=100, help="Items per page (where supported)")
-    ap.add_argument("--area-hh", default="113", help="HH area code (113 is commonly used for Russia)")
+    ap.add_argument(
+        "--days",
+        type=int,
+        default=180,
+        help="Keep vacancies published within N days (0 disables)",
+    )
+    ap.add_argument(
+        "--max-pages", type=int, default=20, help="Max pages per query per source"
+    )
+    ap.add_argument(
+        "--per-page", type=int, default=100, help="Items per page (where supported)"
+    )
+    ap.add_argument(
+        "--area-hh",
+        default="113",
+        help="HH area code (113 is commonly used for Russia)",
+    )
     ap.add_argument(
         "--query",
         action="append",
@@ -472,7 +788,10 @@ def main() -> int:
         "--trudvsem-region",
         action="append",
         default=[],
-        help="Trudvsem region code (repeatable). Example seen in public collections: 9100000000",
+        help=(
+            "Trudvsem region code (repeatable, optional). If omitted, searches across all regions. "
+            "Example region codes seen in public collections: 9100000000"
+        ),
     )
     args = ap.parse_args()
 
@@ -484,16 +803,16 @@ def main() -> int:
     hh = HeadHunterSource(session, user_agent=args.hh_user_agent)
     sj_key = os.environ.get("SUPERJOB_API_KEY", "").strip()
     sj = SuperJobSource(session, api_key=sj_key) if sj_key else None
-    tv = TrudVsemSource(session, region_codes=args.trudvsem_region) if args.trudvsem_region else None
+    tv = TrudVsemSource(session, region_codes=args.trudvsem_region)
 
     selected_sources = set(args.source)
 
     # Guardrails
     if "superjob" in selected_sources and not sj_key:
-        print("ERROR: SUPERJOB_API_KEY env var is required for SuperJob source.", file=sys.stderr)
-        return 2
-    if "trudvsem" in selected_sources and not args.trudvsem_region:
-        print("ERROR: Provide at least one --trudvsem-region to use trudvsem source.", file=sys.stderr)
+        print(
+            "ERROR: SUPERJOB_API_KEY env var is required for SuperJob source.",
+            file=sys.stderr,
+        )
         return 2
 
     seen: Set[Tuple[str, str]] = set()
@@ -507,7 +826,9 @@ def main() -> int:
         # HH
         if "hh" in selected_sources:
             for page in range(args.max_pages):
-                ids, has_more = hh.search_ids(q, area=args.area_hh, page=page, per_page=args.per_page)
+                ids, has_more = hh.search_ids(
+                    q, area=args.area_hh, page=page, per_page=args.per_page
+                )
                 if not ids:
                     break
                 for vid in ids:
@@ -549,19 +870,26 @@ def main() -> int:
                 time.sleep(0.25)
 
         # Trudvsem
-        if "trudvsem" in selected_sources and tv is not None:
-            remember = list(args.trudvsem_region)
-            for region in remember:
+        if "trudvsem" in selected_sources:
+            regions: List[Optional[str]] = (
+                list(args.trudvsem_region) if args.trudvsem_region else [None]
+            )
+            for region in regions:
                 for page in range(args.max_pages):
-                    ids, has_more = tv.search_ids(q, region=region, page=page, per_page=args.per_page)
-                    if not ids:
+                    vs, has_more = tv.search_vacancies(
+                        q, region=region, page=page, per_page=args.per_page
+                    )
+                    if not vs:
                         break
-                    for vid in ids:
-                        key = ("trudvsem", vid)
+                    for v in vs:
+                        key = ("trudvsem", v.vacancy_id)
                         if key in seen:
                             continue
-                        # Connector is minimal; keep placeholder record
-                        vacancies.append(tv.fetch(vid))
+                        if args.days and not within_days(
+                            v.published_at or "", args.days
+                        ):
+                            continue
+                        vacancies.append(v)
                         seen.add(key)
                     if not has_more:
                         break
@@ -573,10 +901,20 @@ def main() -> int:
 
     # Skill aggregation
     counter: Counter[str] = Counter()
+    by_grade: Dict[str, Counter[str]] = {
+        "junior": Counter(),
+        "middle": Counter(),
+        "senior": Counter(),
+        "unknown": Counter(),
+    }
     for v in vacancies:
         skills = extract_skills(key_skills=v.key_skills, text=v.text)
         for s in skills:
             counter[s] += 1
+            g = (v.grade or "unknown").lower()
+            if g not in by_grade:
+                g = "unknown"
+            by_grade[g][s] += 1
 
     skills_path = os.path.join(args.out_dir, "skills_top.csv")
     with open(skills_path, "w", encoding="utf-8", newline="") as f:
@@ -585,9 +923,21 @@ def main() -> int:
         for skill, cnt in counter.most_common(200):
             w.writerow([skill, cnt])
 
+    skills_grade_path = os.path.join(args.out_dir, "skills_by_grade.csv")
+    with open(skills_grade_path, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["skill", "junior", "middle", "senior", "unknown", "total"])
+        for skill, total in counter.most_common(500):
+            j = by_grade["junior"].get(skill, 0)
+            m = by_grade["middle"].get(skill, 0)
+            s = by_grade["senior"].get(skill, 0)
+            u = by_grade["unknown"].get(skill, 0)
+            w.writerow([skill, j, m, s, u, total])
+
     print(f"Collected vacancies: {len(vacancies)}")
     print(f"Wrote: {jobs_path}")
     print(f"Wrote: {skills_path}")
+    print(f"Wrote: {skills_grade_path}")
     print("\nTop 20 skills:")
     for skill, cnt in counter.most_common(20):
         print(f"  {cnt:4d}  {skill}")

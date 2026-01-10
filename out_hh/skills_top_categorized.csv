@@ -1,0 +1,201 @@
+skill,count,category
+Python,52,languages
+CI/CD,52,development
+OWASP,51,base knowledge
+SAST,46,security testing
+Kubernetes,43,development
+DAST,43,security testing
+SCA,39,security testing
+DevSecOps,38,development
+Java,28,languages
+Secure SDLC,27,development
+Pentest,23,security testing
+TLS/PKI,22,cryptography
+Git,21,development
+Burp Suite,19,security testing
+OWASP ZAP,19,security testing
+Docker,17,development
+JavaScript,17,languages
+ИБ,17,base knowledge
+Linux,17,development
+SQL,17,languages
+Logging/SIEM,16,base knowledge
+CWE,12,base knowledge
+Web security,11,web technologies
+WAF,11,web technologies
+Semgrep,11,code security instruments
+Bug bounty,11,base knowledge
+OWASP Top 10,10,base knowledge
+Agile,10,development
+SOC,10,base knowledge
+OAuth2/OIDC,9,web technologies
+CVSS,9,base knowledge
+HTTP(S),9,web technologies
+CVE,8,base knowledge
+Nmap,8,security testing
+SonarQube,8,code security instruments
+SSDLC,7,development
+CodeQL,7,code security instruments
+Bash,6,languages
+Sessions,6,web technologies
+PostgreSQL,6,base knowledge
+Information Security,5,base knowledge
+SAML,5,base knowledge
+AppSec,5,base knowledge
+OWASP WSTG,4,base knowledge
+Ansible,4,base knowledge
+LDAP,4,base knowledge
+Mobile security,4,base knowledge
+Cloud security,4,base knowledge
+GitLab CI,4,development
+TDORP,4,base knowledge
+PowerShell,4,base knowledge
+Тестирование безопасности,3,base knowledge
+C#,3,base knowledge
+Английский язык,3,base knowledge
+Zabbix,3,base knowledge
+TCP/IP,3,base knowledge
+OWASP MASVS,3,base knowledge
+DevOps,3,base knowledge
+JWT,3,web technologies
+ASOC,3,base knowledge
+Atlassian Jira,3,base knowledge
+IAM,3,base knowledge
+EDR,3,base knowledge
+Threat modeling,3,base knowledge
+Виртуализация,2,base knowledge
+Безопасность,2,base knowledge
+AWS,2,base knowledge
+Terraform,2,base knowledge
+Kafka,2,base knowledge
+DNS,2,base knowledge
+MySQL,2,base knowledge
+RabbitMQ,2,base knowledge
+Администрирование серверов Linux,2,development
+VMware,2,base knowledge
+.NET Core,2,base knowledge
+Active Directory,2,base knowledge
+Работа с большим объемом информации,2,base knowledge
+Деловая коммуникация,2,base knowledge
+Проектная документация,2,base knowledge
+C++,2,base knowledge
+bug bounty,2,base knowledge
+Nginx,2,base knowledge
+HTTP,2,web technologies
+Application Security,2,base knowledge
+REST API,2,web technologies
+PAM,2,base knowledge
+SSO,2,base knowledge
+Allure,2,base knowledge
+ООП,2,base knowledge
+Pytest,2,base knowledge
+API security,2,web technologies
+gRPC,2,base knowledge
+Уязвимости защиты,2,base knowledge
+RBAC,2,base knowledge
+OSA,2,base knowledge
+Grafana,2,base knowledge
+OWASP ASVS,2,base knowledge
+KVM,1,base knowledge
+OpenStack,1,base knowledge
+Debian,1,base knowledge
+L3 VPN,1,base knowledge
+Ubuntu Server,1,base knowledge
+Деловая переписка,1,base knowledge
+OpenShift,1,base knowledge
+VLAN,1,base knowledge
+CSS3,1,base knowledge
+OSI,1,base knowledge
+jQuery,1,base knowledge
+VS CSE,1,base knowledge
+HTML5,1,base knowledge
+Ajax,1,base knowledge
+JSON API,1,web technologies
+Web Application Development,1,base knowledge
+HTML,1,base knowledge
+React,1,base knowledge
+ELK,1,base knowledge
+L2 VPN,1,base knowledge
+k8s,1,development
+security quality gates,1,base knowledge
+Secrets detection,1,base knowledge
+Навыки презентации,1,base knowledge
+Asterisk,1,base knowledge
+Flask,1,base knowledge
+EVM,1,base knowledge
+С#,1,base knowledge
+B2B Продажи,1,base knowledge
+киберзащита,1,base knowledge
+Обучение и развитие,1,base knowledge
+Организация учебного процесса,1,base knowledge
+Организаторские навыки,1,base knowledge
+Spring Boot,1,base knowledge
+ReactJS,1,base knowledge
+TypeScript,1,languages
+MobX,1,base knowledge
+Hyper-V,1,base knowledge
+СУБД,1,base knowledge
+etherium,1,base knowledge
+MS Visual Studio,1,base knowledge
+.NET Framework,1,base knowledge
+Business English,1,base knowledge
+Atlassian Confluence,1,base knowledge
+FastAPI,1,base knowledge
+Redis,1,base knowledge
+go,1,languages
+backend,1,base knowledge
+aws,1,base knowledge
+gcp,1,base knowledge
+Сетевые протоколы,1,base knowledge
+IT,1,base knowledge
+GitHub,1,development
+NoSQL,1,base knowledge
+Сети,1,base knowledge
+Prometheus,1,base knowledge
+BugBounty,1,base knowledge
+DDoS,1,base knowledge
+CTF,1,base knowledge
+treat modelling,1,base knowledge
+Application security,1,base knowledge
+Bug Tracker,1,base knowledge
+MS SQL,1,languages
+Алгоритмы и структуры данных,1,base knowledge
+R&D,1,base knowledge
+red team,1,base knowledge
+Spring Framework,1,base knowledge
+Автотестирование,1,base knowledge
+Интеграционное тестирование,1,base knowledge
+Функциональное тестирование,1,base knowledge
+Тестирование на проникновение,1,base knowledge
+OWASP TOP10,1,base knowledge
+Gitlab,1,development
+MFA,1,base knowledge
+Hibernate,1,base knowledge
+Spring Data,1,base knowledge
+Vulnerability assessment,1,security testing
+Аудит безопасности,1,base knowledge
+Публичные выступления,1,base knowledge
+Snowflake,1,base knowledge
+фаззинг,1,base knowledge
+Сетевая атака,1,base knowledge
+NIST,1,base knowledge
+статический анализ,1,base knowledge
+Сканеры безопасности,1,base knowledge
+ФСТЭК,1,base knowledge
+C/C++,1,base knowledge
+Fuzzing,1,security testing
+динамический анализ,1,base knowledge
+Clickhouse,1,base knowledge
+Go,1,languages
+MAST,1,base knowledge
+Работа с клиентами,1,base knowledge
+Стратегические продажи,1,base knowledge
+Управление продажами,1,base knowledge
+Управление требованиями,1,base knowledge
+Qt,1,base knowledge
+Apache,1,base knowledge
+CA,1,base knowledge
+OS Linux,1,development
+Рекрутмент,1,base knowledge
+Подбор персонала,1,base knowledge
+Аудит информационной безопасности,1,base knowledge
