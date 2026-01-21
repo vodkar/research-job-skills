@@ -1,201 +1,201 @@
 skill,count
-Python,52
-CI/CD,52
-OWASP,51
-SAST,46
-Kubernetes,43
-DAST,43
-SCA,39
-DevSecOps,38
-Java,28
-Secure SDLC,27
-Pentest,23
-TLS/PKI,22
-Git,21
-Burp Suite,19
-OWASP ZAP,19
-Docker,17
-JavaScript,17
-ИБ,17
+OWASP,48
+CI/CD,47
+SAST,45
+Python,42
+DAST,39
+Kubernetes,39
+SCA,38
+DevSecOps,37
+Pentest,25
+Secure SDLC,25
+Java,23
+SQL,21
+TLS/PKI,21
+Информационная безопасность,19
 Linux,17
-SQL,17
-Logging/SIEM,16
-CWE,12
-Bug bounty,11
-Web security,11
-WAF,11
-Semgrep,11
-OWASP Top 10,10
-Agile,10
-SOC,10
-HTTP(S),9
+JavaScript,17
+Git,15
+OWASP ZAP,15
+Burp Suite,15
+Bug bounty,15
+Docker,13
+Agile,12
+HTTP(S),12
+Logging/SIEM,12
+CVE,10
+Web security,10
 OAuth2/OIDC,9
-CVSS,9
-CVE,8
-Nmap,8
-SonarQube,8
-SSDLC,7
-CodeQL,7
-Bash,6
+Semgrep,9
+WAF,9
+SOC,9
+CWE,8
+Bash,7
+Information Security,7
+SonarQube,7
+PostgreSQL,7
 Sessions,6
-PostgreSQL,6
-SAML,5
-AppSec,5
-Information Security,5
-PowerShell,4
-OWASP WSTG,4
-Ansible,4
-LDAP,4
-Mobile security,4
+CodeQL,6
+CVSS,6
+Threat modeling,6
+SSDLC,6
+Mobile security,5
+JWT,5
+OWASP Top 10,5
+Английский язык,5
+SAML,4
+EDR,4
 Cloud security,4
+LDAP,4
+OWASP MASVS,4
 GitLab CI,4
 TDORP,4
-EDR,3
-IAM,3
-Atlassian Jira,3
+AppSec,4
+RBAC,4
+Организаторские навыки,4
+Водитель,4
+Водительское удостоверение категории B,4
+Nmap,3
 ASOC,3
-Threat modeling,3
-JWT,3
-Тестирование безопасности,3
-OWASP MASVS,3
-TCP/IP,3
-Zabbix,3
-DevOps,3
-Английский язык,3
-C#,3
-REST API,2
-PAM,2
-SSO,2
-API security,2
-Allure,2
+Аудит безопасности,3
+PAM,3
+С#,3
+Аудит информационной безопасности,3
+API security,3
+Ansible,3
+IAM,3
+Fuzzing,3
+Kafka,3
+Деловая переписка,3
+MySQL,3
+Аккуратное вождение,3
+Знание города,3
+Соблюдение ПДД,3
 ООП,2
-Pytest,2
-HTTP,2
-gRPC,2
-Grafana,2
-bug bounty,2
-Уязвимости защиты,2
-RBAC,2
-OWASP ASVS,2
-OSA,2
-Application Security,2
+OWASP WSTG,2
+Информационные технологии,2
 Nginx,2
-Проектная документация,2
-C++,2
-Безопасность,2
-AWS,2
+Zabbix,2
+Уязвимости защиты,2
 Terraform,2
-Kafka,2
-DNS,2
-MySQL,2
-Виртуализация,2
-Администрирование серверов Linux,2
-VMware,2
-RabbitMQ,2
-.NET Core,2
-Active Directory,2
-Работа с большим объемом информации,2
+C++,2
+SCA/OSA,2
+MFA,2
+Atlassian Jira,2
+CORS,2
+СУБД,2
+Анализ данных,2
 Деловая коммуникация,2
-Spring Data,1
-Hibernate,1
-MFA,1
-IT,1
-Gitlab,1
-OWASP TOP10,1
-Тестирование на проникновение,1
-Функциональное тестирование,1
-Интеграционное тестирование,1
-Автотестирование,1
-Spring Framework,1
-R&D,1
+MS Visual Studio,2
+Виртуализация,2
+DevOps,2
+VMware,2
+Тестирование безопасности,2
+VipNet,2
+Redis,2
+RabbitMQ,2
+Обучение,2
+Обучение и развитие,2
+Организация учебного процесса,2
 NoSQL,1
+R&D,1
+Spring Framework,1
 Алгоритмы и структуры данных,1
-MS SQL,1
-Bug Tracker,1
-Application security,1
-treat modelling,1
-CTF,1
-DDoS,1
-BugBounty,1
-Prometheus,1
-Сети,1
+Allure,1
+PowerShell,1
+Pytest,1
+OSA,1
+OS Linux,1
+TCP/IP,1
 Vulnerability assessment,1
-red team,1
-Аудит безопасности,1
-MAST,1
+Сети,1
+SSO,1
+AWS,1
 Подбор персонала,1
 Рекрутмент,1
-OS Linux,1
-CA,1
-Apache,1
+React Native,1
+red team,1
+bug bounty,1
+OWASP TOP10,1
+Gitlab,1
+Стратегические продажи,1
+Управление продажами,1
+Работа с клиентами,1
+CSA,1
+osa,1
+SAST/DAST,1
 Qt,1
 Управление требованиями,1
-Управление продажами,1
-Стратегические продажи,1
-Работа с клиентами,1
-Go,1
-Snowflake,1
-Clickhouse,1
-динамический анализ,1
-Fuzzing,1
-C/C++,1
+WEB пентестера,1
+K8S,1
+BugBounty,1
 ФСТЭК,1
-Сканеры безопасности,1
 статический анализ,1
+Сканеры безопасности,1
 NIST,1
-Сетевая атака,1
+динамический анализ,1
 фаззинг,1
-Публичные выступления,1
-GitHub,1
-B2B Продажи,1
-Сетевые протоколы,1
-Навыки презентации,1
-Secrets detection,1
-security quality gates,1
+Сетевая атака,1
+C/C++,1
 k8s,1
-VS CSE,1
 ELK,1
-React,1
+VS CSE,1
+Bug Tracker,1
+treat modelling,1
+Application security,1
+Архитектура ИБ,1
+OWASP ASVS,1
+Безопасность,1
+Go,1
+GitHub,1
+Навыки презентации,1
+Сетевые протоколы,1
+Публичные выступления,1
+B2B Продажи,1
+security quality gates,1
+Secrets detection,1
+Микросервисная архитектура,1
+Scrum,1
+ASP.NET Core,1
+ASP.NET,1
 HTML,1
+Ajax,1
+React,1
+CSS3,1
+HTML5,1
 Web Application Development,1
 JSON API,1
-Ajax,1
-HTML5,1
-CSS3,1
 jQuery,1
-OpenStack,1
-Debian,1
-L3 VPN,1
-KVM,1
-Деловая переписка,1
-Ubuntu Server,1
-OpenShift,1
-VLAN,1
-OSI,1
-Asterisk,1
-L2 VPN,1
-EVM,1
-etherium,1
-gcp,1
-aws,1
-backend,1
-go,1
-Redis,1
-Flask,1
-FastAPI,1
-Atlassian Confluence,1
-Business English,1
-.NET Framework,1
-MS Visual Studio,1
-СУБД,1
-С#,1
-Hyper-V,1
-MobX,1
-TypeScript,1
-ReactJS,1
-Spring Boot,1
-Организаторские навыки,1
-Организация учебного процесса,1
-Обучение и развитие,1
+PTAF,1
+DDOS,1
+DPI,1
+UTM,1
 киберзащита,1
-Аудит информационной безопасности,1
+высоконагруженный,1
+Websocket,1
+уязвимость,1
+HTTP,1
+Wallarm,1
+Работа с большим объемом информации,1
+Деловое общение,1
+Управление качеством,1
+.NET Core,1
+.NET Framework,1
+Asterisk,1
+OpenStack,1
+OpenShift,1
+L3 VPN,1
+OSI,1
+Debian,1
+VLAN,1
+L2 VPN,1
+Ubuntu Server,1
+DNS,1
+Администрирование серверов Linux,1
+KVM,1
+MS Office,1
+Ведение переписки на иностранном языке,1
+Customer Service,1
+Административная поддержка руководителя,1
+Тайм-менеджмент,1
+Кассовые документы,1

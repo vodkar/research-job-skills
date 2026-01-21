@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import logging
 import os
 import re
 import sys
@@ -34,6 +35,8 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 import requests
 from requests import Response
 from requests.exceptions import HTTPError
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------
 # Helpers
@@ -589,6 +592,7 @@ class TrudVsemSource:
     def __init__(self, session: requests.Session, region_codes: List[str]) -> None:
         self.s = session
         self.region_codes = region_codes
+        self._total_cache: dict[tuple[str | None, str], int] = {}
 
     @staticmethod
     def _first_str(d: Dict[str, Any], keys: List[str]) -> str:
@@ -686,6 +690,12 @@ class TrudVsemSource:
         # Official docs: paging via offset/limit and optional text search.
         # Region is optional. If provided, use /vacancies/region/%region_code%.
         offset = page * per_page
+
+        cache_key = (region, query)
+        cached_total = self._total_cache.get(cache_key)
+        if cached_total is not None and offset >= cached_total:
+            return [], False
+
         params: Dict[str, Any] = {"text": query, "offset": offset, "limit": per_page}
         url = (
             f"{self.BASE}/vacancies/region/{region}"
@@ -694,6 +704,16 @@ class TrudVsemSource:
         )
 
         data = http_get_json(self.s, url, params=params)
+        status = str(data.get("status") or "")
+        if status and status != "200":
+            meta = data.get("meta") or {}
+            err = meta.get("error") if isinstance(meta, dict) else None
+            msg = f"TrudVsem API returned status={status} for query={query!r} region={region!r} offset={offset} limit={per_page}"
+            if isinstance(err, str) and err.strip():
+                msg += f"; error={err.strip()}"
+            logger.warning(msg)
+            return [], False
+
         vacs = ((data.get("results") or {}).get("vacancies")) or []
 
         out: List[Vacancy] = []
@@ -710,9 +730,16 @@ class TrudVsemSource:
             total = total_raw
 
         if total is not None:
+            self._total_cache[cache_key] = total
+
+        if total is not None:
             has_more = offset + len(vacs) < total
         else:
             has_more = len(vacs) >= per_page
+
+        if not out:
+            # Defensive: avoid loops on inconsistent paging metadata.
+            has_more = False
 
         return out, has_more
 
@@ -742,6 +769,7 @@ def write_jsonl(path: str, rows: Iterable[Dict[str, Any]]) -> None:
 
 
 def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     ap = argparse.ArgumentParser(
         description="Mine AppSec skills from RU job boards via official APIs."
     )
@@ -876,9 +904,18 @@ def main() -> int:
             )
             for region in regions:
                 for page in range(args.max_pages):
-                    vs, has_more = tv.search_vacancies(
-                        q, region=region, page=page, per_page=args.per_page
-                    )
+                    try:
+                        vs, has_more = tv.search_vacancies(
+                            q, region=region, page=page, per_page=args.per_page
+                        )
+                    except RuntimeError:
+                        logger.exception(
+                            "TrudVsem fetch failed for query=%r region=%r page=%s",
+                            q,
+                            region,
+                            page,
+                        )
+                        break
                     if not vs:
                         break
                     for v in vs:

@@ -37,12 +37,12 @@ python appsec_skill_miner.py \
 python appsec_skill_miner.py \
   --source trudvsem \
   --query "appsec" \
-  # Optional: restrict to a region; otherwise searches across all regions
-  # --trudvsem-region 9100000000 \
   --query "application security" \
   --query "безопасность приложений" \
   --query "инженер по безопасности приложений" \
   --query "информационная безопасность" \
   --query "безопасность приложений" \
+  --days 365 \
+  --max-pages 20 \
   --out-dir out_with_trudvsem
 ```

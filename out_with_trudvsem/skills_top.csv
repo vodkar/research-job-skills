@@ -1,0 +1,201 @@
+skill,count
+CI/CD,126
+Python,112
+SQL,91
+Kubernetes,90
+Git,87
+Java,61
+OWASP,60
+Linux,55
+SAST,52
+TLS/PKI,50
+DevSecOps,47
+JavaScript,47
+Docker,46
+DAST,45
+SCA,43
+HTTP(S),39
+PostgreSQL,39
+Agile,36
+Logging/SIEM,36
+Pentest,33
+Информационная безопасность,25
+Secure SDLC,25
+Английский язык,24
+Web security,20
+OWASP ZAP,18
+Burp Suite,17
+Cloud security,17
+Bash,16
+Bug bounty,16
+Sessions,16
+OAuth2/OIDC,14
+WAF,14
+REST API,14
+TypeScript,13
+CVE,12
+DevOps,12
+API,12
+RBAC,11
+Apache Kafka,11
+RabbitMQ,11
+SOC,10
+CWE,10
+React,10
+Деловая коммуникация,10
+Redis,10
+Функциональное тестирование,10
+Spring Framework,9
+Semgrep,9
+SonarQube,9
+JWT,9
+Gitlab,9
+Information Security,8
+CVSS,8
+Threat modeling,8
+GitLab CI,8
+OWASP Top 10,8
+HTML,8
+MySQL,8
+Деловая переписка,8
+Active Directory,8
+Информационные технологии,7
+LDAP,7
+HTTP,7
+Техническая поддержка,7
+Golang,7
+EDR,6
+CodeQL,6
+TCP/IP,6
+Zabbix,6
+Nginx,6
+SSDLC,6
+C++,6
+Kafka,6
+Atlassian Jira,6
+VMware,6
+Администрирование серверов Linux,6
+REST,6
+SAML,5
+Nmap,5
+PAM,5
+С#,5
+Terraform,5
+Go,5
+GitHub,5
+Микросервисная архитектура,5
+Работа с большим объемом информации,5
+Организаторские навыки,5
+Grafana,5
+Ручное тестирование,5
+PHP,5
+Postman,5
+Управление командой,5
+Тестирование,5
+Правила дорожного движения,5
+NoSQL,4
+Pytest,4
+PowerShell,4
+Mobile security,4
+Аудит информационной безопасности,4
+API security,4
+React Native,4
+IAM,4
+TDORP,4
+AppSec,4
+СУБД,4
+CORS,4
+Деловое общение,4
+Node.js,4
+FastAPI,4
+Работа с базами данных,4
+Базы данных,4
+gRPC,4
+Регрессионное тестирование,4
+Prometheus,4
+QA,4
+Постановка задач разработчикам,4
+Техническая эксплуатация,4
+Jenkins,4
+MS SQL,4
+Обучение и развитие,4
+Знание устройства автомобиля,4
+Телефонные переговоры,4
+SOLID,4
+Clickhouse,4
+Allure,3
+ASOC,3
+Аудит безопасности,3
+SSO,3
+Ansible,3
+OWASP MASVS,3
+Fuzzing,3
+C/C++,3
+B2B Продажи,3
+Навыки презентации,3
+ASP.NET,3
+Scrum,3
+JSON API,3
+.NET Core,3
+KVM,3
+DNS,3
+Виртуализация,3
+Тестирование безопасности,3
+Cookies,3
+Atlassian Confluence,3
+Технические средства информационной защиты,3
+Kotlin,3
+Интеграционное тестирование,3
+Android,3
+Управление проектами,3
+Swagger,3
+Разработка технических заданий,3
+Аналитическое мышление,3
+ORACLE,3
+Laravel,3
+Техническое обслуживание,3
+Ведение документации,3
+Ubuntu,3
+C#,3
+Техническая поддержка пользователей,3
+Настройка ПК,3
+Разработка ПО,3
+Работа в команде,3
+Пассажирские перевозки,3
+Безопасное маневрирование,3
+Apache Maven,3
+MongoDB,3
+Активные продажи,3
+Django Framework,3
+Figma,3
+Пользователь ПК,3
+Системный анализ,3
+BPMN,3
+Администрирование сетевого оборудования,3
+ООП,2
+OWASP WSTG,2
+Уязвимости защиты,2
+Работа с клиентами,2
+Управление требованиями,2
+SCA/OSA,2
+ELK,2
+MFA,2
+Публичные выступления,2
+Сетевые протоколы,2
+HTML5,2
+Анализ данных,2
+Debian,2
+OpenStack,2
+MS Office,2
+ISO 27001,2
+Настройка почтовых серверов,2
+Обеспечение антивирусной защиты,2
+CCNA,2
+VipNet,2
+Flask,2
+Системы безопасности,2
+Yandex Cloud,2
+Администрирование,2
+SSL/TLS,2
+HTTPS,2
+Разработка бизнес-требований,2
